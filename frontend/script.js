@@ -1,9 +1,12 @@
+// Configuration
+const API_BASE_URL = 'http://51.21.129.246:3000';
+
 async function fetchMessage() {
     const responseDiv = document.getElementById('response');
     responseDiv.textContent = 'Loading...';
-    
+
     try {
-        const response = await fetch('http://<51.21.129.246>:3000/api/message');
+        const response = await fetch(`${API_BASE_URL}/api/message`);
         const data = await response.json();
         responseDiv.textContent = data.message;
     } catch (error) {
@@ -13,7 +16,7 @@ async function fetchMessage() {
 
 async function checkBackendStatus() {
     try {
-        const response = await fetch('http://<51.21.129.246>:3000/health');
+        const response = await fetch(`${API_BASE_URL}/health`);
         const statusDiv = document.getElementById('backend-status');
         if (response.ok) {
             statusDiv.innerHTML = '✅ Backend is running';
