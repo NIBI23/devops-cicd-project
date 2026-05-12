@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+    
+    environment {
+        // Update these with your actual values
+        PROD_SERVER_IP = '51.21.129.246'
+        PROD_SERVER_USER = 'ubuntu'
+        BACKEND_DIR = '/home/ubuntu/backend'
+        FRONTEND_DIR = '/var/www/html'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '📦 Cloning code from GitHub...'
+                git branch: 'main', 
+                    url: 'https://github.com/NIBI23/devops-cicd-project/tree/main'
+                echo '✅ Code cloned successfully'
+            }
+        }
+        
+        stage('Install Backend Dependencies') {
+            steps {
+                echo '📦 Installing Node.js dependencies...'
+                dir('backend') {
+                    sh 'npm install'
+                }
+                echo '✅ Dependencies installed'
+            }
+        }
+        
+        stage('Deploy to Production Server') {
+            steps {
+                echo '🚀 Deploying to production server...'
+                
+                // Create directories on production server
+                sshagent(['production-server-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${PROD_SERVER_USER}@${PROD_SERVER_IP} "mkdir -p ${BACKEND_DIR}"
+                        ssh -o StrictHostKeyChecking=no ${PROD_SERVER_USER}@${PROD_SERVER_IP} "sudo mkdir -p ${FRONTEND_DIR}"
+                    """
+                    
+                    // Copy backend files
+                    sh """
+                        scp -o StrictHostKeyChecking=no -r backend/* ${PROD_SERVER_USER}@${PROD_SERVER_IP}:${BACKEND_DIR}/
+                    """
+                    
+                    // Copy frontend files
+                    sh """
+                        scp -o StrictHostKeyChecking=no -r frontend/* ${PROD_SERVER_USER}@${PROD_SERVER_IP}:/tmp/
+                        ssh -o StrictHostKeyChecking=no ${PROD_SERVER_USER}@${PROD_SERVER_IP} "sudo cp -r /tmp/* ${FRONTEND_DIR}/"
+                    """
+                    
+                    // Install dependencies and restart backend with PM2
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${PROD_SERVER_USER}@${PROD_SERVER_IP} << 'EOF'
+                            cd ${BACKEND_DIR}
+                            npm install
+                            pm2 stop backend-app || true
+                            pm2 start server.js --name backend-app
+                            pm2 save
+                            sudo systemctl restart nginx
+                        EOF
+                    """
+                }
+                echo '✅ Deployment completed successfully!'
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '🎉 Pipeline executed successfully!'
+            echo 'Frontend: http://${PROD_SERVER_IP}'
+            echo 'Backend API: http://${PROD_SERVER_IP}:3000/health'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check the logs above.'
+        }
+    }
+}

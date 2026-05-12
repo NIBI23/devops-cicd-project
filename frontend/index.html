@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My CI/CD Demo App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 CI/CD Pipeline Demo</h1>
+        <p>Deployed via Jenkins on AWS EC2</p>
+        <div class="status-card">
+            <h2>Backend Status</h2>
+            <p id="backend-status">Checking connection...</p>
+        </div>
+        <button onclick="fetchMessage()">Get Message from Backend</button>
+        <p id="response"></p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
