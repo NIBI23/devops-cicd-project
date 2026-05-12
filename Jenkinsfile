@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '📦 Cloning code from GitHub...'
+                echo ' Cloning code from GitHub...'
                 checkout scm
                 echo '✅ Code cloned successfully'
                 sh 'pwd'
